@@ -1,0 +1,46 @@
+name:                packer-messagepack
+version:             0.1.0.0
+synopsis:            MessagePack Serialization an Deserialization for Packer
+description:         This package implements MessagePack on top of the
+                     Packer package.
+homepage:            https://github.com/mtesseract/packer-msgpack#readme
+license:             BSD3
+author:              Moritz Schulte
+maintainer:          mtesseract@silverratio.net
+copyright:           (c) 2017 Moritz Schulte
+category:            Data
+extra-source-files:
+- README.md
+
+
+library:
+  source-dirs: src
+  ghc-options:
+  - -Wall -fno-warn-type-defaults
+  exposed-modules:
+  - Data.Packer.MessagePack
+  - Data.Packer.MessagePack.Internal.Util
+  dependencies:
+    - base >= 4.7 && < 5
+    - packer
+    - unliftio
+    - text
+    - bytestring
+    - containers
+
+tests:
+  packer-msgpack-test-suite:
+    source-dirs: tests
+    main: Tests.hs
+    ghc-options:
+    - -Wall -fno-warn-type-defaults -threaded
+    dependencies:
+    - base >= 4.7 && < 5
+    - packer-messagepack
+    - hedgehog
+    - packer
+    - containers
+    - bytestring
+    - text
+    - safe-exceptions
+    

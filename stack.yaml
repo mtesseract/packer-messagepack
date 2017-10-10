@@ -1,0 +1,6 @@
+resolver: lts-9.6
+packages:
+- '.'
+extra-deps: [packer-0.1.9]
+flags: {}
+extra-package-dbs: []
