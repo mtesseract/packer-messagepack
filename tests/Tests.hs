@@ -71,7 +71,8 @@ checkIntegralSerialization f = property $ do
 checkSerialization :: (Show a, Eq a, FromMsgPack a, ToMsgPack a)
                     => a -> [Word8] -> PropertyT IO ()
 checkSerialization a ws = do
-  let bs  = runPacking (length ws) (toMsgPack a)
+  s <- fromIntegral <$> msgPackSize a
+  let bs  = runPacking s (toMsgPack a)
       bs' = ByteString.pack ws
   bs === bs'
   a === runUnpacking fromMsgPack bs
@@ -83,81 +84,14 @@ nthWord = go
 
 prop_pos_fixnum :: Property
 prop_pos_fixnum = property $ do
-  a <- forAll $ Gen.int8 Range.linearBounded
+  a <- (fromIntegral :: Int8 -> Int64) <$> (forAll $ Gen.int8 Range.linearBounded)
   checkSerialization (ObjectInt (fromIntegral a .&. 0b01111111))
                       [fromIntegral a .&. 0b01111111]
 
 prop_neg_fixnum :: Property
 prop_neg_fixnum = property $ do
-  a <- forAll $ Gen.filter (\x -> -32 <= x && x < 0) $ Gen.int8 Range.linearBounded
+  a <- (fromIntegral :: Int8 -> Int64) <$> (forAll $ Gen.filter (\x -> -32 <= x && x < 0) $ Gen.int8 Range.linearBounded)
   checkSerialization (ObjectInt (fromIntegral a)) [fromIntegral a]
-
-prop_int8 :: Property
-prop_int8 = checkIntegralSerialization $ \(a :: Int8) ->
-  [ 0xD0
-  , nthWord 0 a
-  ]
-
-prop_int16 :: Property
-prop_int16 = checkIntegralSerialization $ \(a :: Int16) ->
-  [ 0xD1
-  , nthWord 1 a
-  , nthWord 0 a
-  ]
-
-prop_int32 :: Property
-prop_int32 = checkIntegralSerialization $ \(a :: Int32) ->
-  [ 0xD2
-  , nthWord 3 a
-  , nthWord 2 a
-  , nthWord 1 a
-  , nthWord 0 a
-  ]
-
-prop_int64 :: Property
-prop_int64 = checkIntegralSerialization $ \(a :: Int64) ->
-  [ 0xD3
-  , nthWord 7 a
-  , nthWord 6 a
-  , nthWord 5 a
-  , nthWord 4 a
-  , nthWord 3 a
-  , nthWord 2 a
-  , nthWord 1 a
-  , nthWord 0 a
-  ]
-
-prop_uint8 :: Property
-prop_uint8 = checkIntegralSerialization $ \(a :: Word8) -> [0xCC, a]
-
-prop_uint16 :: Property
-prop_uint16 = checkIntegralSerialization $
-  \(a :: Word16) -> [ 0xCD
-                    , nthWord 1 a
-                    , nthWord 0 a
-                    ]
-
-prop_uint32 :: Property
-prop_uint32 = checkIntegralSerialization $
-  \(a :: Word32) -> [ 0xCE
-                    , nthWord 3 a
-                    , nthWord 2 a
-                    , nthWord 1 a
-                    , nthWord 0 a
-                    ]
-
-prop_uint64 :: Property
-prop_uint64 = checkIntegralSerialization $
-  \(a :: Word64) -> [ 0xCF
-                    , nthWord 7 a
-                    , nthWord 6 a
-                    , nthWord 5 a
-                    , nthWord 4 a
-                    , nthWord 3 a
-                    , nthWord 2 a
-                    , nthWord 1 a
-                    , nthWord 0 a
-                    ]
 
 prop_nil :: Property
 prop_nil = property $ do
@@ -198,25 +132,19 @@ checkBytesDeserialization marker lowerBound upperBound _ = property $ do
 prop_bin8 :: Property
 prop_bin8 = checkBytesDeserialization 0xC4 0 (2^8 - 1) (Proxy :: Proxy Word8)
 
--- prop_bin16 :: Property
--- prop_bin16 = checkBytesDeserialization 0xC5 (2^8) (2^10 - 1) (Proxy :: Proxy Word16)
-
--- prop_bin32 :: Property
--- prop_bin32 = checkBytesDeserialization 0xC6 (2^16) (2^17 - 1) (Proxy :: Proxy Word32)
-
 checkStringDeserialization :: forall a. (Num a, Integral a, FiniteBits a)
                            => Word8 -> Int -> Int -> Proxy a -> Property
 checkStringDeserialization marker lowerBound upperBound _ = property $ do
-  t <- forAll $ Gen.text (Range.linear lowerBound upperBound) (return 'A')
+  t <- forAll $ Gen.text (Range.linear lowerBound (upperBound `div` 2)) (return 'λ')
   let bs = Text.encodeUtf8 t
       l = extractWordsBE (fromIntegral (ByteString.length bs) :: a)
   checkSerialization t (marker : l ++ (ByteString.unpack bs))
 
 prop_fixstr :: Property
 prop_fixstr = property $ do
-  t <- forAll $ Gen.text (Range.linear 0 (2^5 - 1)) (return 'A')
-  let n = Text.length t
-      bs = Text.encodeUtf8 t
+  t <- forAll $ Gen.text (Range.linear 0 ((2^5 - 1) `div` 2)) (return 'λ')
+  let bs = Text.encodeUtf8 t
+      n = ByteString.length bs
   checkSerialization t $ (fromIntegral n .|. 0b10100000) : ByteString.unpack bs
 
 prop_str8 :: Property

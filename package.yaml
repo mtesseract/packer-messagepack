@@ -27,6 +27,7 @@ library:
     - text
     - bytestring
     - containers
+    - safe-exceptions
 
 tests:
   packer-msgpack-test-suite:
