@@ -71,11 +71,13 @@ checkIntegralSerialization f = property $ do
 checkSerialization :: (Show a, Eq a, FromMsgPack a, ToMsgPack a)
                     => a -> [Word8] -> PropertyT IO ()
 checkSerialization a ws = do
-  s <- fromIntegral <$> msgPackSize a
-  let bs  = runPacking s (toMsgPack a)
-      bs' = ByteString.pack ws
-  bs === bs'
-  a === runUnpacking fromMsgPack bs
+  annotate $ show a
+  size <- fromIntegral <$> msgPackSize a
+  let bsSerialized = runPacking size (toMsgPack a)
+      bsExpected   = ByteString.pack ws
+  bsSerialized === bsExpected
+  annotate $ show bsSerialized
+  a === runUnpacking fromMsgPack bsSerialized
 
 nthWord :: (Bits a, Integral a) => Int -> a -> Word8
 nthWord = go
