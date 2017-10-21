@@ -47,6 +47,14 @@ class FromMsgPack a where
   -- | Deserializes a MessagePack value in an 'Unpacking' monad.
   fromMsgPack :: Unpacking a
 
+-- | Serialize a single 'Word64' value. Depending on the size of the
+-- value, one of the follow formats is used:
+--
+--  - Pos FixInt
+--  - UInt  8
+--  - UInt 16
+--  - UInt 32
+--  - UInt 64
 toMsgPackUInt :: Word64 -> Packing ()
 toMsgPackUInt x
   | x < 2^7   = putWord8 (fromIntegral x)
@@ -55,6 +63,8 @@ toMsgPackUInt x
   | x < 2^32  = putWord8 markerUInt32 >> putWord32BE (fromIntegral x)
   | otherwise = putWord8 markerUInt64 >> putWord64BE (fromIntegral x)
 
+-- | Computes the deserialization size of the provided 'Word64'
+-- number.
 sizeMsgPackUInt :: Word64 -> Int64
 sizeMsgPackUInt x
   | x < 2^7   = 1
@@ -63,6 +73,7 @@ sizeMsgPackUInt x
   | x < 2^32  = 5
   | otherwise = 9
 
+-- | Deserialize an unsigned integer as a 'Word64' value.
 fromMsgPackUInt :: Unpacking Word64
 fromMsgPackUInt = do
   w <- getWord8
@@ -75,6 +86,15 @@ fromMsgPackUInt = do
   where exn w    = MsgPackDeserializationFailure (exnMsg w)
         exnMsg w = "Invalid UInt Marker: " <> Text.pack (show w)
 
+-- | Serialize a single 'Int64' value. Depending on the size of the
+-- value, one of the follow formats is used:
+--
+--  - Pos FixInt
+--  - Neg FixInt
+--  - Int  8
+--  - Int 16
+--  - Int 32
+--  - Int 64
 toMsgPackInt :: Int64 -> Packing ()
 toMsgPackInt x
   | 0     <= x && x < 2^7  = putWord8 (fromIntegral x)
@@ -84,6 +104,7 @@ toMsgPackInt x
   | -2^31 <= x && x < 2^31 = putWord8 markerInt32 >> putWord32BE (fromIntegral x)
   | otherwise              = putWord8 markerInt64 >> putWord64BE (fromIntegral x)
 
+-- | Computes the deserialization size of the provided 'Int64' number.
 sizeMsgPackInt :: Int64 -> Int64
 sizeMsgPackInt x
   | 0     <= x && x < 2^7  = 1
@@ -93,6 +114,7 @@ sizeMsgPackInt x
   | -2^31 <= x && x < 2^31 = 5
   | otherwise              = 9
 
+-- | Deserialize a signed integer as an 'Int64' value.
 fromMsgPackInt :: Unpacking Int64
 fromMsgPackInt = do
   w <- getWord8
@@ -477,6 +499,7 @@ instance ToMsgPack Object where
     ObjectFloat32 b -> msgPackSize b
     ObjectFloat64 b -> msgPackSize b
 
+-- | Data type modelling all known MessagePack markers.
 data Marker = MarkerNil
             | MarkerTrue
             | MarkerFalse
@@ -542,27 +565,36 @@ parseMarker w
   | w == markerFloat64    = pure MarkerFloat64
   | otherwise = Nothing
 
+-- | Check if the provided 'Word8' contains a FixStr marker.
 hasMarkerFixStr :: Word8 -> Bool
 hasMarkerFixStr w =
   w .&. 0b11100000 == markerFixStr
 
+-- | Check if the provided 'Word8' contains a FixArray marker.
 hasMarkerFixArray :: Word8 -> Bool
 hasMarkerFixArray w =
   w .&. 0b11110000 == markerFixArray
 
+-- | Check if the provided 'Word8' contains a FixMap marker.
 hasMarkerFixMap :: Word8 -> Bool
 hasMarkerFixMap w =
   w .&. 0b11110000 == markerFixMap
 
+-- | Check if the provided 'Word8' contains a Pos FixNum marker.
 hasMarkerPosFixNum :: Word8 -> Bool
 hasMarkerPosFixNum  w =
   w .&. 0b10000000 == 0
 
+-- | Check if the provided 'Word8' contains a Neg FixNum marker.
 hasMarkerNegFixNum :: Word8 -> Bool
 hasMarkerNegFixNum w =
   let wInt8 = fromIntegral w :: Int8
   in -2^5 <= wInt8 && wInt8 < 0
 
+-- | Given a MessagePack marker, deserialize an object.
+--
+-- Note: A positive fix num will cause the object to be deserialized
+-- as a ObjectInt, not an ObjectUInt.
 parseObject :: Marker -> Unpacking Object
 parseObject MarkerNil       = pure ObjectNil            <*  skipWord
 parseObject MarkerTrue      = ObjectBool                <$> fromMsgPack
