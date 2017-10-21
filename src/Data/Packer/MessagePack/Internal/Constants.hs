@@ -4,11 +4,11 @@ module Data.Packer.MessagePack.Internal.Constants where
 
 import           Data.Word
 
-markerBoolTrue :: Word8
-markerBoolTrue = 0xC2
-
 markerBoolFalse :: Word8
-markerBoolFalse = 0xC3
+markerBoolFalse = 0xC2
+
+markerBoolTrue :: Word8
+markerBoolTrue = 0xC3
 
 markerUInt8 :: Word8
 markerUInt8 = 0xCC
