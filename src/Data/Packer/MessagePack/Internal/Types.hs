@@ -77,32 +77,32 @@ fromMsgPackUInt = do
 
 toMsgPackInt :: Int64 -> Packing ()
 toMsgPackInt x
-  | 0     <= x && x <= 2^7  = putWord8 (fromIntegral x)
-  | -2^5  <= x && x <  0    = putWord8 (fromIntegral x)
-  | -2^7  <= x && x <  2^8  = putWord8 markerInt8  >> putWord8 (fromIntegral x)
-  | -2^15 <= x && x <  2^15 = putWord8 markerInt16 >> putWord16BE (fromIntegral x)
-  | -2^31 <= x && x <  2^31 = putWord8 markerInt32 >> putWord32BE (fromIntegral x)
-  | otherwise               = putWord8 markerInt64 >> putWord64BE (fromIntegral x)
+  | 0     <= x && x < 2^7  = putWord8 (fromIntegral x)
+  | -2^5  <= x && x < 0    = putWord8 (fromIntegral x)
+  | -2^7  <= x && x < 2^7  = putWord8 markerInt8  >> putWord8    (fromIntegral x)
+  | -2^15 <= x && x < 2^15 = putWord8 markerInt16 >> putWord16BE (fromIntegral x)
+  | -2^31 <= x && x < 2^31 = putWord8 markerInt32 >> putWord32BE (fromIntegral x)
+  | otherwise              = putWord8 markerInt64 >> putWord64BE (fromIntegral x)
 
 sizeMsgPackInt :: Int64 -> Int64
 sizeMsgPackInt x
-  | 0     <= x && x <= 2^7  = 1
-  | -2^5  <= x && x <  0    = 1
-  | -2^7  <= x && x <  2^8  = 2
-  | -2^15 <= x && x <  2^15 = 3
-  | -2^31 <= x && x <  2^31 = 5
-  | otherwise               = 9
+  | 0     <= x && x < 2^7  = 1
+  | -2^5  <= x && x < 0    = 1
+  | -2^7  <= x && x < 2^7  = 2
+  | -2^15 <= x && x < 2^15 = 3
+  | -2^31 <= x && x < 2^31 = 5
+  | otherwise              = 9
 
 fromMsgPackInt :: Unpacking Int64
 fromMsgPackInt = do
   w <- getWord8
   let w' = fromIntegral w :: Int8
   if | w .&. 0b10000000 == 0 -> return (fromIntegral w)
-     | -2^5 <= w' && w' < 0  -> return (fromIntegral w)
-     | w == markerInt8       -> fromIntegral <$> getWord8
-     | w == markerInt16      -> fromIntegral <$> getWord16BE
-     | w == markerInt32      -> fromIntegral <$> getWord32BE
-     | w == markerInt64      -> fromIntegral <$> getWord64BE
+     | -2^5 <= w' && w' < 0  -> return (fromIntegral w')
+     | w == markerInt8       -> fromIntegral . (fromIntegral :: Word8  -> Int8)  <$> getWord8
+     | w == markerInt16      -> fromIntegral . (fromIntegral :: Word16 -> Int16) <$> getWord16BE
+     | w == markerInt32      -> fromIntegral . (fromIntegral :: Word32 -> Int32) <$> getWord32BE
+     | w == markerInt64      -> fromIntegral . (fromIntegral :: Word64 -> Int64) <$> getWord64BE
      | otherwise             -> throwIO (exn w)
   where exn w    = MsgPackDeserializationFailure (exnMsg w)
         exnMsg w = "Invalid Int Marker: " <> Text.pack (show w)
@@ -113,7 +113,7 @@ data Object = ObjectString Text
             | ObjectUInt Word64
             | ObjectInt Int64
             | ObjectBool Bool
-            | ObjectFloat32 Double
+            | ObjectFloat32 Float
             | ObjectFloat64 Double
             | ObjectArray [Object]
             | ObjectMap (Map Object Object)
@@ -538,6 +538,8 @@ parseMarker w
   | w == markerFixMap     = pure MarkerFixMap
   | w == markerMap16      = pure MarkerMap16
   | w == markerMap32      = pure MarkerMap32
+  | w == markerFloat32    = pure MarkerFloat32
+  | w == markerFloat64    = pure MarkerFloat64
   | otherwise = Nothing
 
 hasMarkerFixStr :: Word8 -> Bool
