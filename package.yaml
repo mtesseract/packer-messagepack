@@ -1,9 +1,9 @@
 name:                packer-messagepack
-version:             0.1.0.0
+version:             0.2.0.0
 synopsis:            MessagePack Serialization an Deserialization for Packer
 description:         This package implements MessagePack on top of the
                      Packer package.
-homepage:            https://github.com/mtesseract/packer-msgpack#readme
+homepage:            https://github.com/mtesseract/packer-messagepack#readme
 license:             BSD3
 author:              Moritz Schulte
 maintainer:          mtesseract@silverratio.net
@@ -19,7 +19,6 @@ library:
   - -Wall -fno-warn-type-defaults
   exposed-modules:
   - Data.Packer.MessagePack
-  - Data.Packer.MessagePack.Internal.Util
   dependencies:
     - base >= 4.7 && < 5
     - packer >= 0.1.9 && < 0.2
