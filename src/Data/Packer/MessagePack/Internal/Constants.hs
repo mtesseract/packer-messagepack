@@ -2,7 +2,7 @@
 
 module Data.Packer.MessagePack.Internal.Constants where
 
-import           Data.Word
+import           Data.Word (Word8)
 
 markerBoolFalse :: Word8
 markerBoolFalse = 0xC2

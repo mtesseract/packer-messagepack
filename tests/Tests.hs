@@ -16,7 +16,7 @@ import           Data.ByteString         (ByteString)
 import qualified Data.ByteString         as ByteString
 import           Data.Foldable
 import           Data.Int
--- import qualified Data.Map                as Map
+import qualified Data.Map                as Map
 import           Data.Maybe
 import           Data.Monoid
 import           Data.Packer
@@ -586,6 +586,12 @@ serializeObj :: Object -> Int64 -> ByteString
 serializeObj obj size =
   runPacking (fromIntegral size) (toMsgPack obj)
 
+genObjectPairWithSize :: MonadGen m => m (Maybe ((Object, Int64), (Object, Int64)))
+genObjectPairWithSize = do
+  a <- genObjectWithSize
+  b <- genObjectWithSize
+  return $ (,) <$> a <*> b
+
 prop_array :: Property
 prop_array = property $ do
   objsWithSize <- catMaybes <$> (forAll $ Gen.list (Range.linear (2^4) (2^6)) genObjectWithSize)
@@ -593,6 +599,22 @@ prop_array = property $ do
       n = fromIntegral (length objs) :: Int16
       objsSerialized = ByteString.unpack . mconcat . map (uncurry serializeObj)  $ objsWithSize
   checkSerialization (ObjectArray objs) (0xDC : (extractWordsBE n ++ objsSerialized))
+
+serializeObjPair :: (Object, Int64) -> (Object, Int64) -> ByteString
+serializeObjPair (obj0, size0) (obj1, size1) =
+  runPacking (fromIntegral (size0 + size1)) (toMsgPack obj0 >> toMsgPack obj1)
+
+filterDuplicates :: (Ord a, Ord b) => [(a, b)] -> [(a, b)]
+filterDuplicates = Map.toList . Map.fromList
+
+prop_fixmap :: Property
+prop_fixmap = property $ do
+  objsWithSize <- filterDuplicates . catMaybes <$> (forAll $ Gen.list (Range.linear 0 15) genObjectPairWithSize)
+  let objPairs = map (\(a, b) -> (fst a, fst b)) objsWithSize
+      n = fromIntegral (length objPairs) :: Int16
+      objsSerialized = ByteString.unpack . mconcat . map (uncurry serializeObjPair)  $ objsWithSize
+  annotate . show $ n
+  checkSerialization (ObjectMap (Map.fromList objPairs)) ((0b10000000 .|. (fromIntegral n)) : objsSerialized)
 
 tests :: IO Bool
 tests = checkParallel $$(discover)
