@@ -77,7 +77,7 @@ sizeMsgPackUInt x
 fromMsgPackUInt :: Unpacking Word64
 fromMsgPackUInt = do
   w <- getWord8
-  if | w .&. 0b10000000 == 0 -> return (fromIntegral w)
+  if | hasMarkerPosFixNum w  -> fromIntegral <$> pure w
      | w == markerUInt8      -> fromIntegral <$> getWord8
      | w == markerUInt16     -> fromIntegral <$> getWord16BE
      | w == markerUInt32     -> fromIntegral <$> getWord32BE
@@ -118,14 +118,13 @@ sizeMsgPackInt x
 fromMsgPackInt :: Unpacking Int64
 fromMsgPackInt = do
   w <- getWord8
-  let w' = fromIntegral w :: Int8
-  if | w .&. 0b10000000 == 0 -> return (fromIntegral w)
-     | -2^5 <= w' && w' < 0  -> return (fromIntegral w')
-     | w == markerInt8       -> fromIntegral . (fromIntegral :: Word8  -> Int8)  <$> getWord8
-     | w == markerInt16      -> fromIntegral . (fromIntegral :: Word16 -> Int16) <$> getWord16BE
-     | w == markerInt32      -> fromIntegral . (fromIntegral :: Word32 -> Int32) <$> getWord32BE
-     | w == markerInt64      -> fromIntegral . (fromIntegral :: Word64 -> Int64) <$> getWord64BE
-     | otherwise             -> throwIO (exn w)
+  if | hasMarkerPosFixNum w -> fromIntegral <$> pure w
+     | hasMarkerNegFixNum w -> fromIntegral . (fromIntegral :: Word8  -> Int8)  <$> pure w
+     | w == markerInt8      -> fromIntegral . (fromIntegral :: Word8  -> Int8)  <$> getWord8
+     | w == markerInt16     -> fromIntegral . (fromIntegral :: Word16 -> Int16) <$> getWord16BE
+     | w == markerInt32     -> fromIntegral . (fromIntegral :: Word32 -> Int32) <$> getWord32BE
+     | w == markerInt64     -> fromIntegral . (fromIntegral :: Word64 -> Int64) <$> getWord64BE
+     | otherwise            -> throwIO (exn w)
   where exn w    = MsgPackDeserializationFailure (exnMsg w)
         exnMsg w = "Invalid Int Marker: " <> Text.pack (show w)
 
