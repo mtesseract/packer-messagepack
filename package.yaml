@@ -22,7 +22,7 @@ library:
   - Data.Packer.MessagePack.Internal.Util
   dependencies:
     - base >= 4.7 && < 5
-    - packer
+    - packer >= 0.1.9 && < 0.2
     - unliftio
     - text
     - bytestring
@@ -37,9 +37,9 @@ tests:
     - -Wall -fno-warn-type-defaults -threaded
     dependencies:
     - base >= 4.7 && < 5
+    - packer >= 0.1.9 && < 0.2
     - packer-messagepack
     - hedgehog
-    - packer
     - containers
     - bytestring
     - text

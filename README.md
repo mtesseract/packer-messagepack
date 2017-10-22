@@ -1,4 +1,4 @@
-# packer-messagepack [![Hackage version](https://img.shields.io/hackage/v/packer-messagepack.svg?label=Hackage)](https://hackage.haskell.org/package/packer-messagepack) [![Stackage version](https://www.stackage.org/package/packer-messagepack/badge/lts?label=Stackage)](https://www.stackage.org/package/packer-messagepack) [![Build Status](https://travis-ci.org/mtesseract/packer-messagepack.svg?branch=master)](https://travis-ci.org/mtesseract/packer-messagepack)
+# packer-messagepack [![Hackage version](https://img.shields.io/hackage/v/packer-messagepack.svg?label=Hackage)](https://hackage.haskell.org/package/packer-messagepack) [![Build Status](https://travis-ci.org/mtesseract/packer-messagepack.svg?branch=master)](https://travis-ci.org/mtesseract/packer-messagepack)
 
 ### About
 
@@ -94,3 +94,14 @@ Note that a MessagePack signed (resp. unsigned) integer can be as big
 as an `Int64` (resp. `Word64`). Therefore, if you want to make sure
 that there are no overflow problems, use `Int64` (resp. `Word64`)
 during deserialization.
+
+### Stackage
+
+Currently, [Packer](https://hackage.haskell.org/package/packer) is not
+included in [Stackage](https://www.stackage.org/) yet. Therefore, if
+you would like to use this package together with Stackage, you could
+pull them in via extra-deps. For example:
+
+```
+extra-deps: [packer-VERSION, packer-messagepack-VERSION]
+```
