@@ -334,17 +334,29 @@ prop_obj_int8 = property $ do
 prop_int8_int16 :: Property
 prop_int8_int16 = property $ do
   i :: Int16 <- forAll genInt8
-  checkSerialization i [0xD0, fromIntegral i]
+  checkSerialization i (0xD0 : extractWordsBE i)
 
 prop_int8_int32 :: Property
 prop_int8_int32 = property $ do
   i :: Int32 <- forAll genInt8
-  checkSerialization i [0xD0, fromIntegral i]
+  checkSerialization i (0xD0 : extractWordsBE i)
 
 prop_int8_int64 :: Property
 prop_int8_int64 = property $ do
   i :: Int64 <- forAll genInt8
-  checkSerialization i [0xD0, fromIntegral i]
+  checkSerialization i (0xD0 : extractWordsBE i)
+
+-- Int
+
+prop_int8_int :: Property
+prop_int8_int = property $ do
+  i :: Int8 <- forAll genInt8
+  checkSerialization (fromIntegral i :: Int) (0xD0 : extractWordsBE i)
+
+prop_int16_int :: Property
+prop_int16_int = property $ do
+  i :: Int16 <- forAll genInt16
+  checkSerialization (fromIntegral i :: Int) (0xD1 : extractWordsBE i)
 
 -- Int16
 
