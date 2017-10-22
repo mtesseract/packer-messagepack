@@ -70,7 +70,27 @@ For example, to serialize a number into a MessagePack encoded
 ByteString, use:
 
 ```haskell
-let n = 2342 :: Int16
+let n = 2342 :: Int
 size <- msgPackSize n
 let bytes = runPacking size (toMsgPack n)
 ```
+
+To deserialize a `ByteString` you can use `fromMsgPack` specialized to
+`fromMsgPack :: Unpacking Object` in case the type of the next
+MessagePack object is not known. For example:
+
+```haskell
+let obj = runUnpacking fromMsgPack bytes :: Object
+```
+
+On the other hand, if a specific type is expected, `fromMsgPack` can
+be used specialized to the respective type as follows:
+
+```haskell
+let n' = runUnpacking fromMsgPack bytes :: Int
+```
+
+Note that a MessagePack signed (resp. unsigned) integer can be as big
+as an `Int64` (resp. `Word64`). Therefore, if you want to make sure
+that there are no overflow problems, use `Int64` (resp. `Word64`)
+during deserialization.
