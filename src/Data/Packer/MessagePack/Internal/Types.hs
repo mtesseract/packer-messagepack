@@ -428,7 +428,7 @@ instance ToMsgPack a => ToMsgPack [a] where
 -- length of @2^32 - 1@.
 instance FromMsgPack a => FromMsgPack [a] where
   fromMsgPack = do
-    w <- getWord8 -- FIXME, overflow
+    w <- getWord8
     l <- if | hasMarkerFixArray w -> fromIntegral <$> pure (w .&. 0b00001111)
             | w == markerArray16  -> fromIntegral <$> getWord16BE
             | w == markerArray32  -> fromIntegral <$> getWord32BE
@@ -488,7 +488,7 @@ instance (ToMsgPack k, ToMsgPack v) => ToMsgPack (Map k v) where
 -- keys resp. values.
 instance (Ord k, Ord v, FromMsgPack k, FromMsgPack v) => FromMsgPack (Map k v) where
   fromMsgPack = do
-    w <- getWord8 -- FIXME, overflow
+    w <- getWord8
     l <- if | hasMarkerFixMap w -> fromIntegral <$> pure (w .&. 0b00001111)
             | w == markerMap16  -> fromIntegral <$> getWord16BE
             | w == markerMap32  -> fromIntegral <$> getWord32BE
