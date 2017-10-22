@@ -171,6 +171,14 @@ instance ToMsgPack Word8 where
 instance FromMsgPack Word8 where
   fromMsgPack = fromMsgPackUInt >>= shrinkTypeIO
 
+-- | ToMsgPack instance for 'Int' values. This implements
+-- serialization for those signed values within the MessagePack int
+-- format family, which fit in an 'Int' (at least positive fixint,
+-- negative fixint, int8, int16).
+instance ToMsgPack Int where
+  toMsgPack = toMsgPack . (fromIntegral :: Int -> Int64)
+  msgPackSize = msgPackSize . (fromIntegral :: Int -> Int64)
+
 -- | ToMsgPack instance for 'Int8' values. This implements
 -- serialization for those signed values within the MessagePack int
 -- format family, which fit in an 'Int8': positive fixint, negative
@@ -179,10 +187,18 @@ instance ToMsgPack Int8 where
   toMsgPack = toMsgPack . (fromIntegral :: Int8 -> Int64)
   msgPackSize = msgPackSize . (fromIntegral :: Int8 -> Int64)
 
+-- | FromMsgPack instance for 'Int' values. This implements
+-- deserialization for those signed values within the MessagePack int
+-- format family, which fit in an 'Int' (at least positive fixint,
+-- negative fixint, int8, int16). Deserializing bigger values will
+-- cause a 'MsgPackDeserializationFailure' exception to be thrown.
+instance FromMsgPack Int where
+  fromMsgPack = fromMsgPackInt >>= shrinkTypeIO
+
 -- | FromMsgPack instance for 'Int8' values. This implements
--- deserialization for those unsigned values within the MessagePack
--- int format family, which fit in an 'Int8': positive fixint,
--- negative fixint, int8. Deserializing bigger values will cause a
+-- deserialization for those signed values within the MessagePack int
+-- format family, which fit in an 'Int8': positive fixint, negative
+-- fixint, int8. Deserializing bigger values will cause a
 -- 'MsgPackDeserializationFailure' exception to be thrown.
 instance FromMsgPack Int8 where
   fromMsgPack = fromMsgPackInt >>= shrinkTypeIO
