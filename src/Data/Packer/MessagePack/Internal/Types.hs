@@ -457,7 +457,16 @@ instance (ToMsgPack k, ToMsgPack v) => ToMsgPack (Map k v) where
     where l = Map.size m
           objects = Map.toList m
 
-  msgPackSize m = sum <$> mapM msgPackSize (Map.toList m)
+  msgPackSize m =
+    if | l < 16    -> (1 +) <$> mapSize
+       | l < 2^16  -> (3 +) <$> mapSize
+       | l < 2^32  -> (5 +) <$> mapSize
+       | otherwise -> throw exn
+
+    where l = fromIntegral (Map.size m)
+          mapSize = sum <$> mapM msgPackSize (Map.toList m)
+          exn = MsgPackSerializationFailure "Map too long"
+
 
 -- | FromMsgPack instance for 'Map's. This implements deserialization
 -- for the MessagePack map format family for maps of up to @2^32 - 1@
