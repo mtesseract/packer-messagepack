@@ -40,7 +40,7 @@ class ToMsgPack a where
   -- monad.
   toMsgPack :: a -> Packing ()
   -- | Computes the size of the serialized data in bytes.
-  msgPackSize :: MonadThrow m => a -> m Int64
+  msgPackSize :: MonadThrow m => a -> m Int
 
 -- | Type class for values which support MessagePack deserialization.
 class FromMsgPack a where
@@ -65,7 +65,7 @@ toMsgPackUInt x
 
 -- | Computes the deserialization size of the provided 'Word64'
 -- number.
-sizeMsgPackUInt :: Word64 -> Int64
+sizeMsgPackUInt :: Word64 -> Int
 sizeMsgPackUInt x
   | x < 2^7   = 1
   | x < 2^8   = 2
@@ -105,7 +105,7 @@ toMsgPackInt x
   | otherwise              = putWord8 markerInt64 >> putWord64BE (fromIntegral x)
 
 -- | Computes the deserialization size of the provided 'Int64' number.
-sizeMsgPackInt :: Int64 -> Int64
+sizeMsgPackInt :: Int64 -> Int
 sizeMsgPackInt x
   | 0     <= x && x < 2^7  = 1
   | -2^5  <= x && x < 0    = 1
