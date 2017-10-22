@@ -41,6 +41,7 @@ data Object = ObjectString Text
 - Instances for the following types:
 
   - Bool
+  - Int
   - Word8
   - Word16
   - Word32
@@ -53,6 +54,7 @@ data Object = ObjectString Text
   - Double
   - ByteString
   - Text
+  - Object
 
   - Furthermore there are instances for
 
