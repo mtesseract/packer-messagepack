@@ -21,10 +21,9 @@ shrinkType :: forall f a b.
               (Applicative f, Integral a, Integral b, Bounded a, Bounded b)
            => f b -> a -> f b
 shrinkType overflowFail a =
-  if minBound <= a' && a' <= maxBound
-  then pure a'
+  if fromIntegral (minBound :: b) <= a && a <= fromIntegral (maxBound :: b)
+  then pure (fromIntegral a :: b)
   else overflowFail
-  where a' = fromIntegral a :: b
 
 shrinkTypeIO :: forall m a b.
                 (MonadIO m, Integral a, Integral b, Bounded a, Bounded b)

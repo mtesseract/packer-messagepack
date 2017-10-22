@@ -93,7 +93,22 @@ let n' = runUnpacking fromMsgPack bytes :: Int
 Note that a MessagePack signed (resp. unsigned) integer can be as big
 as an `Int64` (resp. `Word64`). Therefore, if you want to make sure
 that there are no overflow problems, use `Int64` (resp. `Word64`)
-during deserialization.
+during deserialization. In case of overflows exceptions will be
+thrown. For example:
+
+```haskell
+let n = (2^62) :: Int64
+size <- msgPackSize n
+let bytes = runPacking size (toMsgPack n)
+    n' = runUnpacking fromMsgPack bytes :: Int32
+```
+
+Because the number `2^62` exceeds the boundaries of `Int32`, `n'` will
+denote a pure exception:
+
+```haskell
+MsgPackDeserializationFailure "Integer Overflow"
+```
 
 ### Stackage
 
