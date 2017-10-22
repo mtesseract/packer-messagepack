@@ -81,7 +81,7 @@ checkSerialization :: (Show a, Eq a, FromMsgPack a, ToMsgPack a)
                     => a -> [Word8] -> PropertyT IO ()
 checkSerialization a ws = do
   annotate $ show a
-  size <- fromIntegral <$> msgPackSize a
+  size <- msgPackSize a
   let bsSerialized = runPacking size (toMsgPack a)
       bsExpected   = ByteString.pack ws
   annotate . show $ (ByteString.length bsSerialized)
@@ -575,18 +575,18 @@ genObject =
                 , (1, ObjectUInt <$> genWord16)
                 ]
 
-genObjectWithSize :: MonadGen m => m (Maybe (Object, Int64))
+genObjectWithSize :: MonadGen m => m (Maybe (Object, Int))
 genObjectWithSize = do
   obj <- genObject
   case msgPackSize obj of
     Just size -> return $ Just (obj, size)
     Nothing   -> return Nothing
 
-serializeObj :: Object -> Int64 -> ByteString
+serializeObj :: Object -> Int -> ByteString
 serializeObj obj size =
-  runPacking (fromIntegral size) (toMsgPack obj)
+  runPacking size (toMsgPack obj)
 
-genObjectPairWithSize :: MonadGen m => m (Maybe ((Object, Int64), (Object, Int64)))
+genObjectPairWithSize :: MonadGen m => m (Maybe ((Object, Int), (Object, Int)))
 genObjectPairWithSize = do
   a <- genObjectWithSize
   b <- genObjectWithSize
@@ -600,7 +600,7 @@ prop_array = property $ do
       objsSerialized = ByteString.unpack . mconcat . map (uncurry serializeObj)  $ objsWithSize
   checkSerialization (ObjectArray objs) (0xDC : (extractWordsBE n ++ objsSerialized))
 
-serializeObjPair :: (Object, Int64) -> (Object, Int64) -> ByteString
+serializeObjPair :: (Object, Int) -> (Object, Int) -> ByteString
 serializeObjPair (obj0, size0) (obj1, size1) =
   runPacking (fromIntegral (size0 + size1)) (toMsgPack obj0 >> toMsgPack obj1)
 
