@@ -61,3 +61,14 @@ data Object = ObjectString Text
 
     - maps `Map k v` if the types `k` and `v` are instances of
       `FromMsgPack` resp. `ToMsgPack`.
+
+### Usage
+
+For example, to serialize a number into a MessagePack encoded
+ByteString, use:
+
+```haskell
+let n = 2342 :: Int16
+size <- msgPackSize n
+let bytes = runPacking size (toMsgPack n)
+```
