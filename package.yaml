@@ -1,5 +1,5 @@
 name:                packer-messagepack
-version:             0.1.0.1
+version:             0.2.0.0
 synopsis:            MessagePack Serialization an Deserialization for Packer
 description:         This package implements MessagePack on top of the
                      Packer package.
